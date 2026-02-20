@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
+	"log"
 
 	"github.com/crisywini/go-products-api/internal/repository"
 	"github.com/google/uuid"
@@ -27,7 +27,8 @@ func (s *ProductService) CreateProduct(ctx context.Context, name, description st
 		UserID:      userID,
 	})
 	if err != nil {
-		return repository.Product{}, errors.New("error creating product")
+		log.Printf("[ProductService.CreateProduct] db error: %v", err)
+		return repository.Product{}, fmt.Errorf("error creating product: %w", err)
 	}
 	return product, nil
 }
@@ -35,7 +36,8 @@ func (s *ProductService) CreateProduct(ctx context.Context, name, description st
 func (s *ProductService) GetProduct(ctx context.Context, id uuid.UUID) (repository.Product, error) {
 	product, err := s.queries.GetProduct(ctx, id)
 	if err != nil {
-		return repository.Product{}, errors.New("product not found")
+		log.Printf("[ProductService.GetProduct] db error: %v", err)
+		return repository.Product{}, fmt.Errorf("product not found: %w", err)
 	}
 	return product, nil
 }
@@ -43,7 +45,8 @@ func (s *ProductService) GetProduct(ctx context.Context, id uuid.UUID) (reposito
 func (s *ProductService) ListProducts(ctx context.Context) ([]repository.Product, error) {
 	products, err := s.queries.ListProducts(ctx)
 	if err != nil {
-		return nil, errors.New("error fetching products")
+		log.Printf("[ProductService.ListProducts] db error: %v", err)
+		return nil, fmt.Errorf("error fetching products: %w", err)
 	}
 	if products == nil {
 		products = []repository.Product{}
@@ -60,14 +63,16 @@ func (s *ProductService) UpdateProduct(ctx context.Context, id uuid.UUID, name, 
 		Stock:       stock,
 	})
 	if err != nil {
-		return repository.Product{}, errors.New("error updating product")
+		log.Printf("[ProductService.UpdateProduct] db error: %v", err)
+		return repository.Product{}, fmt.Errorf("error updating product: %w", err)
 	}
 	return product, nil
 }
 
 func (s *ProductService) DeleteProduct(ctx context.Context, id uuid.UUID) error {
 	if err := s.queries.DeleteProduct(ctx, id); err != nil {
-		return errors.New("error deleting product")
+		log.Printf("[ProductService.DeleteProduct] db error: %v", err)
+		return fmt.Errorf("error deleting product: %w", err)
 	}
 	return nil
 }
