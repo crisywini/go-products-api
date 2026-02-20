@@ -4,7 +4,9 @@ import (
 	"log"
 
 	"github.com/crisywini/go-products-api/config"
+	"github.com/crisywini/go-products-api/internal/handler"
 	"github.com/crisywini/go-products-api/internal/repository"
+	"github.com/crisywini/go-products-api/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,9 +23,32 @@ func main() {
 	queries := repository.New(pool)
 	_ = queries
 
+	// Services
+	userService := service.NewUserService(queries)
+	productService := service.NewProductService(queries)
+
+	// Handlers
+	userHandler := handler.NewUserHandler(userService)
+	productHandler := handler.NewProductHandler(productService)
+
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
+
+	auth := r.Group("/auth")
+	{
+		auth.POST("/register", userHandler.Register)
+		auth.POST("/login", userHandler.Login)
+	}
+
+	api := r.Group("/api")
+	{
+		api.GET("/products", productHandler.ListProducts)
+		api.GET("/products/:id", productHandler.GetProduct)
+		api.POST("/products", productHandler.CreateProduct)
+		api.PUT("/products/:id", productHandler.UpdateProduct)
+		api.DELETE("/products/:id", productHandler.DeleteProduct)
+	}
 
 	log.Printf("Server up and running on port %s", config.ServerPort)
 	if err := r.Run(":" + config.ServerPort); err != nil {

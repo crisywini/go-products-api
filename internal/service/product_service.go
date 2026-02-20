@@ -45,6 +45,9 @@ func (s *ProductService) ListProducts(ctx context.Context) ([]repository.Product
 	if err != nil {
 		return nil, errors.New("error fetching products")
 	}
+	if products == nil {
+		products = []repository.Product{}
+	}
 	return products, nil
 }
 
