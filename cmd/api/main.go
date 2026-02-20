@@ -5,6 +5,7 @@ import (
 
 	"github.com/crisywini/go-products-api/config"
 	"github.com/crisywini/go-products-api/internal/handler"
+	"github.com/crisywini/go-products-api/internal/middleware"
 	"github.com/crisywini/go-products-api/internal/repository"
 	"github.com/crisywini/go-products-api/internal/service"
 	"github.com/gin-gonic/gin"
@@ -26,9 +27,10 @@ func main() {
 	// Services
 	userService := service.NewUserService(queries)
 	productService := service.NewProductService(queries)
+	jwtService := service.NewJWTService(config.JWTSecret)
 
 	// Handlers
-	userHandler := handler.NewUserHandler(userService)
+	userHandler := handler.NewUserHandler(userService, jwtService)
 	productHandler := handler.NewProductHandler(productService)
 
 	r.GET("/health", func(c *gin.Context) {
@@ -42,6 +44,7 @@ func main() {
 	}
 
 	api := r.Group("/api")
+	api.Use(middleware.AuthMiddleware(jwtService))
 	{
 		api.GET("/products", productHandler.ListProducts)
 		api.GET("/products/:id", productHandler.GetProduct)

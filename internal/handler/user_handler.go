@@ -9,10 +9,11 @@ import (
 
 type UserHandler struct {
 	userService *service.UserService
+	jwtService  *service.JWTService
 }
 
-func NewUserHandler(userService *service.UserService) *UserHandler {
-	return &UserHandler{userService: userService}
+func NewUserHandler(userService *service.UserService, jwtService *service.JWTService) *UserHandler {
+	return &UserHandler{userService: userService, jwtService: jwtService}
 }
 
 type registerRequest struct {
@@ -58,9 +59,20 @@ func (h *UserHandler) Login(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
+
+	token, err := h.jwtService.GenerateToken(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Error generating auth token",
+		})
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"id":    user.ID,
-		"name":  user.Name,
-		"email": user.Email,
+		"token": token,
+		"user": gin.H{
+			"id":    user.ID,
+			"name":  user.Name,
+			"email": user.Email,
+		},
 	})
 }
